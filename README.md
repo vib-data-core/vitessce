@@ -25,3 +25,7 @@ npm run dev
 Open your browser and look at the console log. The Vitessce UI should load and show the data from the object store  in bucket `spatial-hackathon-private/`.
 
 ![Vitessce UI](./public/Screenshot%202024-09-18%20at%2023.06.16.png)
+
+
+## Acknowledgements
+
