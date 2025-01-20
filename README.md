@@ -27,5 +27,7 @@ Open your browser and look at the console log. The Vitessce UI should load and s
 ![Vitessce UI](./public/Screenshot%202024-09-18%20at%2023.06.16.png)
 
 
-## Acknowledgements
+## Acknowledgement
+
+This codebase is made possible in collaboration with Spatial Catalyst and Saeys Lab.
 
