@@ -4,6 +4,11 @@ import { sign } from './functions.ts'
 const searchString = window.location.search;
 const urlParams = new URLSearchParams(searchString);
 const urlParam = urlParams.get("url");
+const credentials = {
+  access_key: '',
+  secret_key: '',
+  bucket: '',
+};
 console.log('URL parameter: ' + urlParam);
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
@@ -46,20 +51,20 @@ document.addEventListener('DOMContentLoaded', () => {
     event.preventDefault();  // Prevent the default form submission
 
     // Get the values from the form inputs
-    const access_key = (document.getElementById('access_key') as HTMLInputElement).value;
-    const secret_key = (document.getElementById('secret_key') as HTMLInputElement).value;
-    const bucket = (document.getElementById('bucket') as HTMLInputElement).value;
+    credentials.access_key = (document.getElementById('access_key') as HTMLInputElement).value;
+    credentials.secret_key = (document.getElementById('secret_key') as HTMLInputElement).value;
+    credentials.bucket = (document.getElementById('bucket') as HTMLInputElement).value;
 
     // Log the values (for debugging)
-    console.log('Access Key:', access_key);
-    console.log('Secret Key:', secret_key);
-    console.log('Bucket:', bucket);
+    console.log('Access Key:', credentials.access_key);
+    console.log('Secret Key:', credentials.secret_key);
+    console.log('Bucket:', credentials.bucket);
 
     // Hide the modal after submission
     modal.style.display = 'none';
 
     // Proceed with your logic using these values
-    setupFetch(access_key, secret_key, bucket);
+    setupFetch(credentials.access_key, credentials.secret_key, credentials.bucket);
   });
 });
 
@@ -73,10 +78,6 @@ const endpoint = 'https://objectstor.vib.be/'
 
 // 3. Function to setup the Fetch API using the provided credentials
 async function setupFetch(access_key: string, secret_key: string, bucket: string) {
-  console.log('Access key:', access_key);
-  console.log('Secret key:', secret_key);
-  console.log('Bucket:', bucket);
-
   // Now you can use the provided values instead of import.meta.env
   const url = endpoint + bucket;
 
@@ -109,7 +110,7 @@ window.fetch = new Proxy(window.fetch, {
     // If url contains the endpoint, apply custom headers
     if (urlString.includes(endpoint)) {
       console.log("Specific string found in url: " + urlString);
-      const headers = await sign(urlString);
+      const headers = await sign(urlString, credentials.access_key, credentials.secret_key);
       args[1] = { method: "GET", headers: headers }; // Apply custom headers
     }
 
@@ -121,6 +122,7 @@ window.fetch = new Proxy(window.fetch, {
     return temp;
   },
 });
+
 
 // 4. Start Vitessce. A config JSON can be loaded from code or storage (not ideal).
 // Nicer would be to just auto config from the Zarr store passed via the URL parameter:
