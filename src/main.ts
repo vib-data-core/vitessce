@@ -80,7 +80,7 @@ async function setupFetch(access_key: string, secret_key: string, bucket: string
   // Now you can use the provided values instead of import.meta.env
   const url = endpoint + bucket;
 
-  const headers = await sign(url); // Assuming you have a sign function to generate the signed headers
+  const headers = await sign(url, access_key, secret_key);
   const res = await fetch(url, {
     method: 'GET',
     headers: headers,
