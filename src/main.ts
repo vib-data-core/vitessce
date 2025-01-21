@@ -12,36 +12,83 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     <p>Open the console to see the signed request headers.</p>
     <p>URL: ${urlParam}.</p>
     <div id="root"></div>
+      <!-- Modal HTML structure -->
+      <div id="modal" class="modal">
+        <div class="modal-content">
+          <h2>Enter Credentials</h2>
+          <form id="credentialsForm">
+            <label for="access_key">Access Key:</label>
+            <input type="text" id="access_key" name="access_key" required><br><br>
+            
+            <label for="secret_key">Secret Key:</label>
+            <input type="text" id="secret_key" name="secret_key" required><br><br>
+            
+            <label for="bucket">Bucket:</label>
+            <input type="text" id="bucket" name="bucket" required><br><br>
+
+            <button type="submit">Submit</button>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 `
+
+// 1. Show the modal to ask for access key, secret key, and bucket
+document.addEventListener('DOMContentLoaded', () => {
+  const modal = document.getElementById('modal') as HTMLDivElement;
+  const form = document.getElementById('credentialsForm') as HTMLFormElement;
+
+  modal.style.display = 'block';  // Show the modal when the page loads
+
+  // 2. When the form is submitted, get the values and hide the modal
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();  // Prevent the default form submission
+
+    // Get the values from the form inputs
+    const access_key = (document.getElementById('access_key') as HTMLInputElement).value;
+    const secret_key = (document.getElementById('secret_key') as HTMLInputElement).value;
+    const bucket = (document.getElementById('bucket') as HTMLInputElement).value;
+
+    // Log the values (for debugging)
+    console.log('Access Key:', access_key);
+    console.log('Secret Key:', secret_key);
+    console.log('Bucket:', bucket);
+
+    // Hide the modal after submission
+    modal.style.display = 'none';
+
+    // Proceed with your logic using these values
+    setupFetch(access_key, secret_key, bucket);
+  });
+});
+
+
 // TODO: 1. DO VIB OpenID Connect workflow and get JSON web token (JWT)
 
 // TODO: 2. Get MinIO credentials using JWT. In the meantime we load the credentials from .env
 
 const endpoint = 'https://objectstor.vib.be/'
-const access_key = import.meta.env.VITE_ACCESS_KEY
-const secret_key = import.meta.env.VITE_SECRET_KEY 
 
-console.log(access_key)
-console.log(secret_key)
 
-// 3. Setup the Fetch API with signed S3 credentials.
-// This is just some example code to fetch a file from MinIO
-async function fetchData() {
-  const bucket = "c01-yvan.saeys-spatial.catalyst";
+// 3. Function to setup the Fetch API using the provided credentials
+async function setupFetch(access_key: string, secret_key: string, bucket: string) {
+  console.log('Access key:', access_key);
+  console.log('Secret key:', secret_key);
+  console.log('Bucket:', bucket);
+
+  // Now you can use the provided values instead of import.meta.env
   const url = endpoint + bucket;
-  const headers = await sign(url);  // Now inside async function
+
+  const headers = await sign(url); // Assuming you have a sign function to generate the signed headers
   const res = await fetch(url, {
-    method: "GET",
-    headers: headers
+    method: 'GET',
+    headers: headers,
   });
 
   const text = await res.text();
   console.log(text);
 }
-
-fetchData();
-
 // Intercept fetch requests and apply custom headers, so any fetch request to the endpoint will be signed
 window.fetch = new Proxy(window.fetch, {
   apply: async function (target: any, that: any, args: [RequestInfo, RequestInit?]) {
