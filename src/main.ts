@@ -7,8 +7,7 @@ import { Vitessce } from 'vitessce';
 const credentials = {
   access_key: '',
   secret_key: '',
-  bucket: '',
-  path_to_config: '',
+  config: '',
 };
 
 // TODO: 1. DO VIB OpenID Connect workflow and get JSON web token (JWT)
@@ -119,11 +118,8 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
           <label for="secret_key">Secret Key:</label>
           <input type="text" id="secret_key" name="secret_key" required><br><br>
           
-          <label for="bucket">Bucket:</label>
-          <input type="text" id="bucket" name="bucket" required><br><br>
-
-          <label for="path_to_config">Path to config:</label>
-          <input type="text" id="path_to_config" name="path_to_config" required><br><br>
+          <label for="config">Location:</label>
+          <input type="text" id="config" name="config" required><br><br>
 
           <button type="submit">Submit</button>
         </form>
@@ -145,25 +141,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // Grab user inputs
     credentials.access_key = (document.getElementById('access_key') as HTMLInputElement).value;
     credentials.secret_key = (document.getElementById('secret_key') as HTMLInputElement).value;
-    credentials.bucket = (document.getElementById('bucket') as HTMLInputElement).value;
-    credentials.path_to_config = (document.getElementById('path_to_config') as HTMLInputElement).value;
+    credentials.config = (document.getElementById('config') as HTMLInputElement).value;
 
     // Debug
     console.log('Access Key:', credentials.access_key);
     console.log('Secret Key:', credentials.secret_key);
-    console.log('Bucket:', credentials.bucket);
-    console.log('Path to config:', credentials.path_to_config);
+    console.log('Config:', credentials.config);
+
+    const [bucket, ...pathParts] = credentials.config.split('/');
+    const path_to_config = pathParts.join('/');
 
     // Hide the modal
     modal.style.display = 'none';
 
     // Proceed with logic
-    await setupFetch(credentials.access_key, credentials.secret_key, credentials.bucket);
+    await setupFetch(credentials.access_key, credentials.secret_key, bucket);
 
     // Now fetch the config from the bucket
     let fetchedConfig: any;
     try {
-      fetchedConfig = await fetchConfig(credentials.bucket, credentials.path_to_config);
+      fetchedConfig = await fetchConfig(bucket, path_to_config);
       console.log('Fetched config:', fetchedConfig);
     } catch (e) {
       console.error('Error fetching config:', e);
