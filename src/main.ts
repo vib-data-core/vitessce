@@ -3,7 +3,7 @@ import { sign } from './functions.ts'
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { Vitessce } from 'vitessce';
-import { private_config } from './configs.ts'
+import { private_config } from './config_resolve_minimal.ts'
 
 
 const credentials = {
@@ -11,7 +11,6 @@ const credentials = {
   secret_key: '',
   bucket: '',
 };
-
 
 // TODO: 1. DO VIB OpenID Connect workflow and get JSON web token (JWT)
 
