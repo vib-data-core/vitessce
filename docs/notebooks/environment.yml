@@ -1,0 +1,14 @@
+name: vitessce
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - vitessce[all]
+      - boto3
+      - ipython
+      - ipykernel
+      - spatialdata
+      - jupyterlab
+      - ipywidgets
