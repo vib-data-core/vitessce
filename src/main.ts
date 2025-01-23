@@ -3,13 +3,12 @@ import { sign } from './functions.ts'
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { Vitessce } from 'vitessce';
-import { private_config } from './config_resolve_minimal.ts'
-
 
 const credentials = {
   access_key: '',
   secret_key: '',
   bucket: '',
+  path_to_config: '',
 };
 
 // TODO: 1. DO VIB OpenID Connect workflow and get JSON web token (JWT)
@@ -66,9 +65,19 @@ window.fetch = new Proxy(window.fetch, {
   },
 });
 
+// A helper to fetch the config from the bucket
+async function fetchConfig(bucket: string, path_to_config: string): Promise<any> {
+  const configUrl = `${endpoint}${bucket}/${path_to_config}`;
+  console.log('Fetching config from:', configUrl);
 
-// Define a function to render Vitessce *after* we have credentials
-function initializeVitessce() {
+  const res = await fetch(configUrl);
+  const config = await res.json();
+  return config;
+}
+
+
+// Define a function to render Vitessce *after* we have credentials and config
+function initializeVitessce(config: any ) {
   const container = document.getElementById('root');
   if (!container) {
     throw new Error('Root container not found');
@@ -79,7 +88,7 @@ function initializeVitessce() {
     return React.createElement(Vitessce, {
       height: 500,
       theme: 'light',
-      config: private_config,
+      config: config,
     });
   }
 
@@ -113,6 +122,9 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
           <label for="bucket">Bucket:</label>
           <input type="text" id="bucket" name="bucket" required><br><br>
 
+          <label for="path_to_config">Path to config:</label>
+          <input type="text" id="path_to_config" name="path_to_config" required><br><br>
+
           <button type="submit">Submit</button>
         </form>
       </div>
@@ -134,11 +146,13 @@ document.addEventListener('DOMContentLoaded', () => {
     credentials.access_key = (document.getElementById('access_key') as HTMLInputElement).value;
     credentials.secret_key = (document.getElementById('secret_key') as HTMLInputElement).value;
     credentials.bucket = (document.getElementById('bucket') as HTMLInputElement).value;
+    credentials.path_to_config = (document.getElementById('path_to_config') as HTMLInputElement).value;
 
     // Debug
     console.log('Access Key:', credentials.access_key);
     console.log('Secret Key:', credentials.secret_key);
     console.log('Bucket:', credentials.bucket);
+    console.log('Path to config:', credentials.path_to_config);
 
     // Hide the modal
     modal.style.display = 'none';
@@ -146,8 +160,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Proceed with logic
     await setupFetch(credentials.access_key, credentials.secret_key, credentials.bucket);
 
+    // Now fetch the config from the bucket
+    let fetchedConfig: any;
+    try {
+      fetchedConfig = await fetchConfig(credentials.bucket, credentials.path_to_config);
+      console.log('Fetched config:', fetchedConfig);
+    } catch (e) {
+      console.error('Error fetching config:', e);
+      alert('Error fetching config. Check the console for details.');
+      return;
+    }
+
     // Now that credentials are available, we can safely initialize Vitessce
-    initializeVitessce();
+    initializeVitessce(fetchedConfig);
   });
 });
 
