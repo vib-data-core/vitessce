@@ -16,21 +16,58 @@ const credentials = {
 
 const endpoint = 'https://objectstor.vib.be/'
 
+// A utility that *tries* to fetch the config publicly (no signing).
+//    If it fails (e.g. 403), we assume it's private and require credentials.
+async function tryFetchPublicConfig(bucket: string, pathToConfig: string): Promise<any> {
+  const configUrl = `${endpoint}${bucket}/${pathToConfig}`;
+  console.log('Attempting public fetch at:', configUrl);
 
-// Function to setup the Fetch API using the provided credentials
-async function setupFetch(access_key: string, secret_key: string, bucket: string) {
-  // Now you can use the provided values instead of import.meta.env
-  const url = endpoint + bucket;
-
-  const headers = await sign(url, access_key, secret_key);
-  const res = await fetch(url, {
-    method: 'GET',
-    headers: headers,
-  });
-
-  const text = await res.text();
-  console.log(text);
+  const res = await fetch(configUrl);
+  if (!res.ok) {
+    // We throw an error if not 200, so that we can catch it and show the modal
+    throw new Error(`Public fetch failed. Status: ${res.status}. Possibly private?`);
+  }
+  const json = await res.json();
+  return json;
 }
+
+
+// A function that intercepts all fetch requests matching `endpoint`
+//    and applies AWS-style signing using the user's credentials.
+function enableFetchSigning() {
+  // Only install the proxy *after* we have credentials from the user:
+  window.fetch = new Proxy(window.fetch, {
+    apply: async function (target: any, that: any, args: [RequestInfo, RequestInit?]) {
+      const url = args[0];
+      let urlString: string;
+
+      if (typeof url === 'string') {
+        urlString = url;
+      } else if (url instanceof Request) {
+        urlString = url.url;
+      } else {
+        throw new Error('Unsupported URL type');
+      }
+
+      // If the URL is for the object store, sign it:
+      if (urlString.includes(endpoint)) {
+        const signedHeaders = await sign(urlString, credentials.access_key, credentials.secret_key);
+        // If `args[1]` is missing, create it
+        const originalInit = args[1] || {};
+        // Merge or overwrite headers
+        args[1] = {
+          ...originalInit,
+          method: 'GET', // or keep originalInit.method if you prefer
+          headers: signedHeaders,
+        };
+      }
+
+      return target.apply(that, args);
+    },
+  });
+}
+
+
 // Intercept fetch requests and apply custom headers, so any fetch request to the endpoint will be signed
 window.fetch = new Proxy(window.fetch, {
   apply: async function (target: any, that: any, args: [RequestInfo, RequestInit?]) {
@@ -128,50 +165,84 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   </div>
 `;
 
-// Show the modal + handle form submission
-document.addEventListener('DOMContentLoaded', () => {
+
+function showModal() {
   const modal = document.getElementById('modal') as HTMLDivElement;
+  modal.style.display = 'block';
+}
+
+function hideModal() {
+  const modal = document.getElementById('modal') as HTMLDivElement;
+  modal.style.display = 'none';
+}
+
+
+// Handle user form submission for credentials
+document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('credentialsForm') as HTMLFormElement;
-
-  modal.style.display = 'block';  // Show the modal when the page loads
-
   form.addEventListener('submit', async (event) => {
     event.preventDefault(); 
-
     // Grab user inputs
     credentials.access_key = (document.getElementById('access_key') as HTMLInputElement).value;
     credentials.secret_key = (document.getElementById('secret_key') as HTMLInputElement).value;
     credentials.config = (document.getElementById('config') as HTMLInputElement).value;
 
-    // Debug
     console.log('Access Key:', credentials.access_key);
     console.log('Secret Key:', credentials.secret_key);
     console.log('Config:', credentials.config);
 
-    const [bucket, ...pathParts] = credentials.config.split('/');
-    const path_to_config = pathParts.join('/');
-
     // Hide the modal
-    modal.style.display = 'none';
+    hideModal();
 
-    // Proceed with logic
-    await setupFetch(credentials.access_key, credentials.secret_key, bucket);
+    // Enable fetch signing now that we have credentials
+    enableFetchSigning();
 
-    // Now fetch the config from the bucket
-    let fetchedConfig: any;
+    // Parse bucket + path from the config input
+    const [bucket, ...pathParts] = credentials.config.split('/');
+    const pathToConfig = pathParts.join('/');
+
+    // Attempt to fetch the config with credentials
+    let signedConfig: any;
     try {
-      fetchedConfig = await fetchConfig(bucket, path_to_config);
-      console.log('Fetched config:', fetchedConfig);
+      signedConfig = await fetchConfig(bucket, pathToConfig);
+      console.log('Fetched config (signed):', signedConfig);
     } catch (e) {
-      console.error('Error fetching config:', e);
-      alert('Error fetching config. Check the console for details.');
+      console.error('Error fetching config with signing:', e);
+      alert('Error fetching config with signing. Check the console for details.');
       return;
     }
 
-    // Now that credentials are available, we can safely initialize Vitessce
-    initializeVitessce(fetchedConfig);
+    // Initialize Vitessce
+    initializeVitessce(signedConfig);
   });
 });
 
+// Attempt a "public" load right away. If it fails, show the modal.
+(async function main() {
+  // For example, read ?url=bucket/path_to_config.json from the query string
+  const searchString = window.location.search;
+  const urlParams = new URLSearchParams(searchString);
+  const urlParam = urlParams.get("url");  // e.g. "my-public-bucket/my-config.json"
 
+  if (!urlParam) {
+    // If there's no ?url=... parameter, we have no location to test.
+    // So just show the modal right away:
+    console.log( "No ?url= parameter found. Assuming private bucket." )
+    showModal();
+    return;
+  }
 
+  // We have a config path from the URL, so let's try it publicly:
+  const [bucket, ...pathParts] = urlParam.split('/');
+  const pathToConfig = pathParts.join('/');
+
+  try {
+    const publicConfig = await tryFetchPublicConfig(bucket, pathToConfig);
+    console.log('Successfully fetched config publicly:', publicConfig);
+    // If successful, initialize Vitessce with the public config:
+    initializeVitessce(publicConfig);
+  } catch (error) {
+    console.warn('Public fetch failed, showing modal for credentials...');
+    showModal();
+  }
+})();
