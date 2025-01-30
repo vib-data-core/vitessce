@@ -1,0 +1,186 @@
+{
+    "version": "1.0.15",
+    "name": "Human lymph node, 10X Genomics",
+    "description": "Visium Spatial Gene Expression data from 10x Genomics",
+    "initStrategy": "auto",
+    "datasets": [
+      {
+        "uid": "visium",
+        "files": [
+          {
+            "fileType": "anndata.zarr",
+            "url": "https://objectstor.vib.be/spatial-hackathon-public/_test_vitessce_1/A/1/adata_squares_visium_hd.zarr",
+            "coordinationValues": {
+              "obsType": "spot",
+              "featureType": "gene",
+              "featureValueType": "expression"
+            },
+            "options": {
+              "obsFeatureMatrix": {
+                "path": "X"
+              },
+              "obsLocations": {
+                "path": "obsm/spatial"
+              },
+              "obsSegmentations": {
+                "path": "obsm/segmentations"
+              }
+            }
+          },
+          {
+            "fileType": "image.ome-zarr",
+            "url": "https://objectstor.vib.be/spatial-hackathon-public/_test_vitessce_1/A/1/visium_hd.ome.zarr"
+          }
+        ]
+      }
+    ],
+    "coordinationSpace": {
+      "obsType": {
+        "A": "spot"
+      },
+      "spatialSegmentationLayer": {
+        "A": {
+          "radius": 65,
+          "stroked": true,
+          "visible": true,
+          "opacity": 1
+        }
+      },
+      "spatialImageLayer": {
+        "A": [
+          {
+            "type": "raster",
+            "index": 0,
+            "colormap": null,
+            "transparentColor": null,
+            "opacity": 1,
+            "domainType": "Min/Max",
+            "channels": [
+              {
+                "selection": {
+                  "c": 0
+                },
+                "color": [
+                  255,
+                  0,
+                  0
+                ],
+                "visible": true,
+                "slider": [
+                  0,
+                  255
+                ]
+              },
+              {
+                "selection": {
+                  "c": 1
+                },
+                "color": [
+                  0,
+                  255,
+                  0
+                ],
+                "visible": true,
+                "slider": [
+                  0,
+                  255
+                ]
+              },
+              {
+                "selection": {
+                  "c": 2
+                },
+                "color": [
+                  0,
+                  0,
+                  255
+                ],
+                "visible": true,
+                "slider": [
+                  0,
+                  255
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "obsColorEncoding": {
+        "A": "geneSelection"
+      },
+      "spatialZoom": {
+        "A": -6
+      },
+      "spatialTargetX": {
+        "A": 10000
+      },
+      "spatialTargetY": {
+        "A": 10000
+      },
+      "featureSelection": {
+        "A": [
+          "CR2"
+        ]
+      }
+    },
+    "layout": [
+      {
+        "component": "spatial",
+        "coordinationScopes": {
+          "spatialImageLayer": "A",
+          "spatialZoom": "A",
+          "spatialTargetX": "A",
+          "spatialTargetY": "A",
+          "obsColorEncoding": "A"
+        },
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 6
+      },
+      {
+        "component": "spatial",
+        "coordinationScopes": {
+          "obsType": "A",
+          "spatialImageLayer": "A",
+          "spatialSegmentationLayer": "A",
+          "spatialZoom": "A",
+          "spatialTargetX": "A",
+          "spatialTargetY": "A",
+          "obsColorEncoding": "A",
+          "featureSelection": "A"
+        },
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 6
+      },
+      {
+        "component": "layerController",
+        "coordinationScopes": {
+          "obsType": "A",
+          "spatialImageLayer": "A",
+          "spatialSegmentationLayer": "A"
+        },
+        "props": {
+          "disableChannelsIfRgbDetected": true
+        },
+        "x": 0,
+        "y": 6,
+        "w": 2,
+        "h": 6
+      },
+      {
+        "component": "featureList",
+        "coordinationScopes": {
+          "obsType": "A",
+          "obsColorEncoding": "A",
+          "featureSelection": "A"
+        },
+        "x": 2,
+        "y": 6,
+        "w": 2,
+        "h": 6
+      }
+    ]
+  }

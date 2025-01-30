@@ -101,10 +101,8 @@ function initializeVitessce(config: any) {
 // Insert minimal HTML UI + a modal for credentials
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div>
-    <h1>VIB Vitessce</h1>
-    <p>Open the console to see request logs.</p>
+    <h3>VIB Vitessce</h3>
     <div id="root"></div>
-    
     <div id="modal" class="modal" style="display:none; position:fixed; 
          top:50%; left:50%; transform:translate(-50%, -50%); background:#eee; padding:20px;">
       <div class="modal-content">
