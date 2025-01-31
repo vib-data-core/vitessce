@@ -1,0 +1,134 @@
+{
+    "version": "1.0.15",
+    "name": "liver",
+    "description": "Resolve liver",
+    "datasets": [
+        {
+            "uid": "A",
+            "name": "Liver dataset",
+            "files": [
+                {
+                    "fileType": "raster.json",
+                    "options": {
+                        "schemaVersion": "0.0.2",
+                        "usePhysicalSizeScaling": false,
+                        "images": [
+                            {
+                                "name": "segmentations",
+                                "type": "ome-zarr",
+                                "url": "https://objectstor.vib.be/spatial-hackathon-public/_test_vitessce_1/A/0/63f6a8a0-b563-46b8-9b51-03157ad5a543.ome.zarr",
+                                "metadata": {
+                                    "isBitmask": true
+                                }
+                            },
+                            {
+                                "name": "image",
+                                "type": "ome-zarr",
+                                "url": "https://objectstor.vib.be/spatial-hackathon-public/_test_vitessce_1/A/0/e4be250e-c54e-44e8-ab0e-c2a22e7df01a.ome.zarr"
+                            }
+                        ],
+                        "renderLayers": [
+                            "segmentations",
+                            "image"
+                        ]
+                    }
+                },
+                {
+                    "fileType": "anndata.zarr",
+                    "url": "https://objectstor.vib.be/spatial-hackathon-public/_test_vitessce_1/A/1/4565fb7e-fc28-4acc-9c97-363ae7f8efba.adata.zarr",
+                    "options": {
+                        "obsLocations": {
+                            "path": "obsm/spatial"
+                        },
+                        "obsEmbedding": [
+                            {
+                                "path": "obsm/X_umap",
+                                "dims": [
+                                    0,
+                                    1
+                                ],
+                                "embeddingType": "umap"
+                            }
+                        ],
+                        "obsSets": [
+                            {
+                                "name": "Leiden",
+                                "path": "obs/leiden"
+                            }
+                        ],
+                        "obsFeatureMatrix": {
+                            "path": "X"
+                        }
+                    },
+                    "coordinationValues": {
+                        "obsType": "cell",
+                        "featureType": "gene",
+                        "featureValueType": "expression"
+                    }
+                }
+            ]
+        }
+    ],
+    "coordinationSpace": {
+        "dataset": {
+            "A": "A"
+        },
+        "embeddingType": {
+            "A": "umap"
+        }
+    },
+    "layout": [
+        {
+            "component": "spatial",
+            "coordinationScopes": {
+                "dataset": "A"
+            },
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 6
+        },
+        {
+            "component": "layerController",
+            "coordinationScopes": {
+                "dataset": "A"
+            },
+            "x": 6,
+            "y": 0,
+            "w": 6,
+            "h": 6
+        },
+        {
+            "component": "scatterplot",
+            "coordinationScopes": {
+                "dataset": "A",
+                "embeddingType": "A"
+            },
+            "x": 6,
+            "y": 6,
+            "w": 6,
+            "h": 6
+        },
+        {
+            "component": "obsSets",
+            "coordinationScopes": {
+                "dataset": "A"
+            },
+            "x": 3,
+            "y": 6,
+            "w": 3,
+            "h": 6
+        },
+        {
+            "component": "featureList",
+            "coordinationScopes": {
+                "dataset": "A"
+            },
+            "x": 0,
+            "y": 6,
+            "w": 3,
+            "h": 6
+        }
+    ],
+    "initStrategy": "auto"
+}
