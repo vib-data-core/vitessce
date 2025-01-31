@@ -1,0 +1,100 @@
+{
+    "version": "1.0.15",
+    "name": "liver",
+    "description": "Xenium",
+    "datasets": [
+        {
+            "uid": "A",
+            "name": "Xenium dataset",
+            "files": [
+                {
+                    "fileType": "raster.json",
+                    "options": {
+                        "schemaVersion": "0.0.2",
+                        "usePhysicalSizeScaling": false,
+                        "images": [
+                            {
+                                "name": "segmentations",
+                                "type": "ome-zarr",
+                                "url": "https://objectstor.vib.be/spatial-hackathon-public/_test_vitessce_1/A/1/masks_xenium.ome.zar",
+                                "metadata": {
+                                    "isBitmask": true
+                                }
+                            },
+                            {
+                                "name": "image",
+                                "type": "ome-zarr",
+                                "url": "https://objectstor.vib.be/spatial-hackathon-public/_test_vitessce_1/A/1/raw_image_xenium.ome.zar"
+                            }
+                        ],
+                        "renderLayers": [
+                            "segmentations",
+                            "image"
+                        ]
+                    }
+                },
+                {
+                    "fileType": "anndata.zarr",
+                    "url": "https://objectstor.vib.be/spatial-hackathon-public/_test_vitessce_1/A/1/adata_xenium.zarr",
+                    "options": {
+                        "obsLocations": {
+                            "path": "obsm/spatial"
+                        },
+                        "obsSets": [
+                            {
+                                "name": "Total counts",
+                                "path": "obs/total_counts"
+                            }
+                        ],
+                        "obsFeatureMatrix": {
+                            "path": "X"
+                        }
+                    },
+                    "coordinationValues": {
+                        "obsType": "cell",
+                        "featureType": "gene",
+                        "featureValueType": "expression"
+                    }
+                }
+            ]
+        }
+    ],
+    "coordinationSpace": {
+        "dataset": {
+            "A": "A"
+        }
+    },
+    "layout": [
+        {
+            "component": "spatial",
+            "coordinationScopes": {
+                "dataset": "A"
+            },
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 12
+        },
+        {
+            "component": "layerController",
+            "coordinationScopes": {
+                "dataset": "A"
+            },
+            "x": 6,
+            "y": 0,
+            "w": 6,
+            "h": 6
+        },
+        {
+            "component": "featureList",
+            "coordinationScopes": {
+                "dataset": "A"
+            },
+            "x": 6,
+            "y": 6,
+            "w": 6,
+            "h": 6
+        }
+    ],
+    "initStrategy": "auto"
+}
