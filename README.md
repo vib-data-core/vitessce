@@ -15,7 +15,7 @@ Run the project
 npm run dev
 ```
 
-Open your browser. The Vitessce UI should load. Fill in the Access and secret key and the path to the Vitessce config, e.g. `spatial-hackathon-public/_test_vitessce_1/config_resolve.json`. You should see the following:
+Open your browser. The Vitessce UI should load. Fill in the access and secret key and the path to the Vitessce config, e.g. `spatial-hackathon-public/_test_vitessce_1/config_resolve.json`. You should see the following:
 
 ![Vitessce UI](./public/screenshot_resolve.png)
 
