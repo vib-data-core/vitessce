@@ -101,7 +101,7 @@ function initializeVitessce(config: any) {
 // Insert minimal HTML UI + a modal for credentials
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div>
-    <img src="public/VIBRGBnotaglinepos.png" alt="VIB Vitessce Logo" style="width: 150px; height: auto;">
+    <img src="/vitessce/VIBRGBnotaglinepos.png" alt="VIB Vitessce Logo" style="width: 150px; height: auto;">
     <div id="root"></div>
     <div id="modal" class="modal" style="display:none; position:fixed; 
          top:50%; left:50%; transform:translate(-50%, -50%); background:#eee; padding:20px;">
