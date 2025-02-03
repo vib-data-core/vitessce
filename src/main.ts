@@ -109,11 +109,11 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
         <h2>Enter Credentials</h2>
         <form id="credentialsForm">
           <label for="access_key">Access Key:</label>
-          <input type="text" id="access_key" name="access_key" required><br><br>
-          
+          <input type="password" id="access_key" name="access_key" required><br><br>
+
           <label for="secret_key">Secret Key:</label>
-          <input type="text" id="secret_key" name="secret_key" required><br><br>
-          
+          <input type="password" id="secret_key" name="secret_key" required><br><br>
+
           <label for="config">Location (bucket/path.json):</label>
           <input type="text" id="config" name="config" required><br><br>
 
@@ -122,6 +122,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       </div>
     </div>
   </div>
+
 `;
 
 // Modal helpers
