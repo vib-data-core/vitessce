@@ -147,9 +147,9 @@ document.addEventListener('DOMContentLoaded', () => {
     credentials.secret_key = (document.getElementById('secret_key') as HTMLInputElement).value;
     credentials.config = (document.getElementById('config') as HTMLInputElement).value;
 
-    console.log('Access Key:', credentials.access_key);
-    console.log('Secret Key:', credentials.secret_key);
-    console.log('Config (bucket/path):', credentials.config);
+    //console.log('Access Key:', credentials.access_key);
+    //console.log('Secret Key:', credentials.secret_key);
+    //console.log('Config (bucket/path):', credentials.config);
 
     // Hide the modal
     hideModal();
