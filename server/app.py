@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 
-BASE_DIR = Path(os.environ.get("VITESSCE_BASE_DIR", "/data/groups")).resolve()
+BASE_DIR = Path(os.environ.get("VITESSCE_BASE_DIR", "/")).resolve()
 
 app = FastAPI()
 

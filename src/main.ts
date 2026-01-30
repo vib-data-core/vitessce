@@ -13,10 +13,8 @@ const credentials = {
 
 // Your MinIO/S3 endpoint:
 const endpoint = 'https://objectstor.vib.be/';
-// Backend url for serving local files
-const backendBaseUrl =
-  (import.meta.env.VITE_BACKEND_URL as string | undefined) ?? 'http://localhost:8000';
-const localConfigEndpoint = `${backendBaseUrl}/api/config`;
+// Backend url for serving local files (proxied by Vite in dev)
+const localConfigEndpoint = '/api/config';
 
 // Attempt a PUBLIC fetch first, with the real/original fetch (unproxied).
 async function tryFetchPublicConfig(bucket: string, pathToConfig: string) {
@@ -79,6 +77,36 @@ function isHttpUrl(value: string) {
   } catch {
     return false;
   }
+}
+
+function absolutizeUrl(value: string) {
+  if (isHttpUrl(value)) {
+    return value;
+  }
+  if (value.startsWith('/')) {
+    return new URL(value, window.location.origin).href;
+  }
+  return value;
+}
+
+function normalizeConfigUrls(config: any) {
+  if (!config || typeof config !== 'object') {
+    return config;
+  }
+  if (Array.isArray(config)) {
+    config.forEach(normalizeConfigUrls);
+    return config;
+  }
+
+  Object.entries(config).forEach(([key, value]) => {
+    if (key === 'url' && typeof value === 'string') {
+      config[key] = absolutizeUrl(value);
+      return;
+    }
+    normalizeConfigUrls(value);
+  });
+
+  return config;
 }
 
 async function fetchConfigByUrl(configUrl: string, label = 'Fetch') {
@@ -197,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Initialize Vitessce with the newly fetched config
-    initializeVitessce(signedConfig);
+    initializeVitessce(normalizeConfigUrls(signedConfig));
   });
 });
 
@@ -214,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isHttpUrl(urlParam)) {
         const publicConfig = await fetchConfigByUrl(urlParam, 'URL fetch');
         console.log('Successfully fetched config by URL:', publicConfig);
-        initializeVitessce(publicConfig);
+        initializeVitessce(normalizeConfigUrls(publicConfig));
         return;
       }
 
@@ -223,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const pathToConfig = pathParts.join('/');
       const publicConfig = await tryFetchPublicConfig(bucket, pathToConfig);
       console.log('Successfully fetched config publicly:', publicConfig);
-      initializeVitessce(publicConfig);
+      initializeVitessce(normalizeConfigUrls(publicConfig));
       return;
     } catch (err) {
       console.warn('URL fetch failed or is forbidden, prompting for credentials...', err);
@@ -236,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const publicConfig = await fetchLocalConfig(fileParam);
       console.log('Successfully fetched config from local backend:', publicConfig);
-      initializeVitessce(publicConfig);
+      initializeVitessce(normalizeConfigUrls(publicConfig));
       return;
     } catch (err) {
       console.warn('Local file fetch failed, prompting for credentials...', err);
