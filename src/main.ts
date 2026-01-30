@@ -13,19 +13,17 @@ const credentials = {
 
 // Your MinIO/S3 endpoint:
 const endpoint = 'https://objectstor.vib.be/';
+// Backend url for serving local files
+const backendBaseUrl =
+  (import.meta.env.VITE_BACKEND_URL as string | undefined) ?? 'http://localhost:8000';
+const localConfigEndpoint = `${backendBaseUrl}/api/config`;
 
 // Attempt a PUBLIC fetch first, with the real/original fetch (unproxied).
 async function tryFetchPublicConfig(bucket: string, pathToConfig: string) {
   const configUrl = `${endpoint}${bucket}/${pathToConfig}`;
   console.log('Attempting public fetch at:', configUrl);
 
-  const res = await fetch(configUrl);
-  if (!res.ok) {
-    // Throw an error so we can catch it and show the modal
-    throw new Error(`Public fetch failed. Status: ${res.status}. Possibly private?`);
-  }
-  const json = await res.json();
-  return json;
+  return fetchConfigByUrl(configUrl, 'Public fetch');
 }
 
 // Only AFTER we confirm we need credentials do we install the fetch proxy.
@@ -71,12 +69,30 @@ async function fetchConfig(bucket: string, pathToConfig: string) {
   const configUrl = `${endpoint}${bucket}/${pathToConfig}`;
   console.log('Fetching config from:', configUrl);
 
+  return fetchConfigByUrl(configUrl, 'Signed fetch');
+}
+
+function isHttpUrl(value: string) {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+async function fetchConfigByUrl(configUrl: string, label = 'Fetch') {
+  console.log(`${label} at:`, configUrl);
   const res = await fetch(configUrl);
   if (!res.ok) {
-    throw new Error(`Fetch for config failed with status ${res.status}`);
+    throw new Error(`${label} failed with status ${res.status}`);
   }
-  const config = await res.json();
-  return config;
+  return res.json();
+}
+
+async function fetchLocalConfig(filePath: string) {
+  const configUrl = `${localConfigEndpoint}?path=${encodeURIComponent(filePath)}`;
+  return fetchConfigByUrl(configUrl, 'Local config fetch');
 }
 
 // Render Vitessce after we have a config
@@ -114,7 +130,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
           <label for="secret_key">Secret Key:</label>
           <input type="password" id="secret_key" name="secret_key" required><br><br>
 
-          <label for="config">Location (bucket/path.json):</label>
+          <label for="config">Location (bucket/path.json, /data/groups/... or https://...):</label>
           <input type="text" id="config" name="config" required><br><br>
 
           <button type="submit">Submit</button>
@@ -154,18 +170,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // Hide the modal
     hideModal();
 
-    // Enable fetch signing now that we have credentials
-    enableFetchSigning();
-
-    // Parse bucket + path from the config input
-    const [bucket, ...pathParts] = credentials.config.split('/');
-    const pathToConfig = pathParts.join('/');
-
-    // Now fetch the config *with signing*
+    //“Fetch the config (sign if needed)”
     let signedConfig;
     try {
-      signedConfig = await fetchConfig(bucket, pathToConfig);
-      console.log('Fetched config (signed):', signedConfig);
+      const input = credentials.config.trim();
+      if (isHttpUrl(input)) {
+        if (input.includes(endpoint)) {
+          enableFetchSigning();
+        }
+        signedConfig = await fetchConfigByUrl(input, 'Config fetch');
+      } else if (input.startsWith('/')) {
+        signedConfig = await fetchLocalConfig(input);
+      } else {
+        // Enable fetch signing now that we have credentials
+        enableFetchSigning();
+        // Parse bucket + path from the config input
+        const [bucket, ...pathParts] = input.split('/');
+        const pathToConfig = pathParts.join('/');
+        signedConfig = await fetchConfig(bucket, pathToConfig);
+      }
+      console.log('Fetched config:', signedConfig);
     } catch (e) {
       console.error('Error fetching config with signing:', e);
       alert('Error fetching config with signing. Check console for details.');
@@ -181,26 +205,46 @@ document.addEventListener('DOMContentLoaded', () => {
 (async function main() {
   const searchString = window.location.search;
   const urlParams = new URLSearchParams(searchString);
-  const urlParam = urlParams.get("url"); 
-  // e.g. ?url=my-public-bucket/my-config.json
+  const urlParam = urlParams.get("url");
+  const fileParam = urlParams.get("file");
+  // e.g. ?url=my-public-bucket/my-config.json or ?url=https://... or ?file=/data/groups/.../config.json
 
-  if (!urlParam) {
-    console.log("No ?url= parameter found. Assuming private bucket, show credentials modal.");
-    showModal();
-    return;
+  if (urlParam) {
+    try {
+      if (isHttpUrl(urlParam)) {
+        const publicConfig = await fetchConfigByUrl(urlParam, 'URL fetch');
+        console.log('Successfully fetched config by URL:', publicConfig);
+        initializeVitessce(publicConfig);
+        return;
+      }
+
+      // Attempt a public fetch for object store bucket/path
+      const [bucket, ...pathParts] = urlParam.split('/');
+      const pathToConfig = pathParts.join('/');
+      const publicConfig = await tryFetchPublicConfig(bucket, pathToConfig);
+      console.log('Successfully fetched config publicly:', publicConfig);
+      initializeVitessce(publicConfig);
+      return;
+    } catch (err) {
+      console.warn('URL fetch failed or is forbidden, prompting for credentials...', err);
+      showModal();
+      return;
+    }
   }
 
-  // Attempt a public fetch
-  const [bucket, ...pathParts] = urlParam.split('/');
-  const pathToConfig = pathParts.join('/');
-
-  try {
-    const publicConfig = await tryFetchPublicConfig(bucket, pathToConfig);
-    console.log('Successfully fetched config publicly:', publicConfig);
-    // If we got here, the data is publicly available. Render Vitessce:
-    initializeVitessce(publicConfig);
-  } catch (err) {
-    console.warn('Public fetch failed or is forbidden, prompting for credentials...', err);
-    showModal();
+  if (fileParam) {
+    try {
+      const publicConfig = await fetchLocalConfig(fileParam);
+      console.log('Successfully fetched config from local backend:', publicConfig);
+      initializeVitessce(publicConfig);
+      return;
+    } catch (err) {
+      console.warn('Local file fetch failed, prompting for credentials...', err);
+      showModal();
+      return;
+    }
   }
+
+  console.log("No ?url= or ?file= parameter found. Assuming private bucket, show credentials modal.");
+  showModal();
 })();
