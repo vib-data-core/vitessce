@@ -273,3 +273,121 @@ vc.layout((spatial_plot) | ((genes | layer_controller) / status_view))
 
 vw = vc.widget()
 vw
+
+
+import numpy as np
+import zarr
+from ome_zarr.writer import write_multiscale, write_image
+from typing import Literal
+
+
+def dataarray_to_ome_zarr(
+    img_da,
+    channel_names,
+    output_path,
+    img_name="Image",
+    chunks=(1, 256, 256),
+    channel_colors=None,
+    zarr_format: Literal[2, 3] = 2,
+):
+    """
+    Convert an xarray.DataArray (c, y, x) to an OME-Zarr (Zarr v2) multiscale image.
+
+    Parameters
+    ----------
+    img_da : xarray.DataArray
+        DataArray with dimensions ('c', 'y', 'x'). Backed by dask or numpy.
+    channel_names : list[str]
+        Channel names for omero.channels[].label.
+    output_path : str
+        Path to the output OME-Zarr store (directory ending in .ome.zarr is typical).
+    img_name : str, default "Image"
+        Image name for omero.name.
+    chunks : tuple[int], default (1, 256, 256)
+        Chunk sizes in (c, y, x) order.
+    channel_colors : dict[str, str] or None, default None
+        Map channel_name -> hex color string (e.g. "FF0000").
+        If None, "FFFFFF" is used for all channels.
+    """
+
+    # Ensure dims are in (c, y, x) order
+    expected_dims = ("c", "y", "x")
+    if tuple(img_da.dims) != expected_dims:
+        img_da = img_da.transpose(*expected_dims)
+
+    data = img_da.data  # dask or numpy array
+    dtype = np.dtype(data.dtype)
+
+    # Int vs float range for default display window
+    if dtype.kind in ("u", "i"):
+        info = np.iinfo(dtype)
+    else:
+        info = np.finfo(dtype)
+
+    default_window = {
+        "start": 0,
+        "min": 0,
+        "max": int(info.max),
+        "end": int(info.max),
+    }
+
+    # Make sure channel metadata matches the data
+    n_channels = data.shape[0]
+    if len(channel_names) != n_channels:
+        raise ValueError(
+            f"len(channel_names)={len(channel_names)} does not match "
+            f"number of channels in data={n_channels}"
+        )
+
+    if channel_colors is None:
+        channel_colors = {name: "FFFFFF" for name in channel_names}
+
+    # Zarr v2 store: this is the "v2 vs v3" part.
+    # Using DirectoryStore + open_group(mode='w') gives you a Zarr v2 store.
+    z_root = zarr.open_group(output_path, mode="w", zarr_format=zarr_format)
+
+    # Write a single-scale (or multiscale, if you pass more arrays) OME-NGFF image
+    # The writer will populate the 'multiscales' attribute on z_root.
+    write_image(
+        image=data,
+        group=z_root,
+        axes=[
+            {"name": "c", "type": "channel"},
+            {"name": "y", "type": "space"},
+            {"name": "x", "type": "space"},
+        ],
+        storage_options={"chunks": chunks},
+    )
+    """
+    write_multiscale(
+        arrays=[data],
+        group=z_root,
+        axes=[
+            {"name": "c", "type": "channel"},
+            {"name": "y", "type": "space"},
+            {"name": "x", "type": "space"},
+        ],
+        storage_options={"chunks": chunks},
+    )
+    """
+
+    # Add OMERO-style metadata (channel names, colors, window)
+    z_root.attrs["omero"] = {
+        "name": img_name,
+        # This "version" field matches your earlier style; it refers to the
+        # OME-OMERO metadata schema version, not Zarr v2/v3.
+        "version": "0.3",
+        "rdefs": {
+            # For multi-channel RGB-like data you might prefer "color";
+            # keeping "greyscale" here to mirror your example.
+            "model": "greyscale",
+        },
+        "channels": [
+            {
+                "label": ch_name,
+                "color": channel_colors.get(ch_name, "FFFFFF"),
+                "window": default_window,
+            }
+            for ch_name in channel_names
+        ],
+    }
