@@ -8,7 +8,7 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
       },
-      '/data': {
+      '/files': {
         target: 'http://localhost:8000',
         changeOrigin: true,
       },

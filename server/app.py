@@ -48,7 +48,7 @@ def get_config(path: str):
     return JSONResponse(content=data)
 
 
-@app.get("/data/{path:path}")
+@app.get("/files/{path:path}")
 def get_data(path: str):
     abs_path = resolve_under_base(path)
     if not abs_path.is_file():
