@@ -1,3 +1,6 @@
+
+
+'''
 from vitessce import (
     VitessceConfig,
     Component as cm,
@@ -391,3 +394,4 @@ def dataarray_to_ome_zarr(
             for ch_name in channel_names
         ],
     }
+'''
