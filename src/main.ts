@@ -86,10 +86,11 @@ function initializeVitessce(config: any) {
     throw new Error('Root container not found');
   }
   const root = createRoot(container);
+  const vitessceHeight = Math.max(window.innerHeight - 120, 800);
 
   function MyApp() {
     return React.createElement(Vitessce, {
-      height: 500,
+      height: vitessceHeight,
       theme: 'light',
       config: config,
     });
@@ -101,7 +102,7 @@ function initializeVitessce(config: any) {
 // Insert minimal HTML UI + a modal for credentials
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div>
-    <img src="/vitessce/VIBRGBnotaglinepos.png" alt="VIB Vitessce Logo" style="width: 150px; height: auto;">
+    <img src="/vitessce/VIBRGBnotaglinepos.png" alt="VIB Vitessce Logo" style="width: 50px; height: auto;">
     <div id="root"></div>
     <div id="modal" class="modal" style="display:none; position:fixed; 
          top:50%; left:50%; transform:translate(-50%, -50%); background:#eee; padding:20px;">

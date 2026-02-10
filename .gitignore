@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+notebooks
+.env
+
+# CPython cache/bytecode artifacts
+__pycache__/
+*.py[cod]
+*$py.class
