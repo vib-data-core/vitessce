@@ -10,7 +10,7 @@ from ome_zarr.scale import Scaler
 from ome_zarr.writer import write_image, write_multiscale
 
 
-def dataarray_datatree_to_ome_zarr(
+def xarray_to_ome_zarr(
     tree_or_da: xr.DataArray | xr.DataTree,
     output_path: str | Path,
     channel_names: Sequence[str],
@@ -20,6 +20,7 @@ def dataarray_datatree_to_ome_zarr(
     microns_per_pixel: float = 1.0,  # ignored if coords_in_microns is True (i.e. if True, we fetch the scale factor from the coords)
     scale_factors: Sequence[int]
     | None = None,  # None -> no pyramid, ignored if tree_or_da is tree
+    zarr_format: int = 3,
 ) -> None:
     """
     Write an OME-Zarr image from either a single-resolution DataArray or a
@@ -52,6 +53,8 @@ def dataarray_datatree_to_ome_zarr(
     scale_factors : list[int] | None
         Per-level downscale factors for building a pyramid from a DataArray.
         Must be uniform (e.g., [2, 2, 2]). Ignored for DataTree input.
+    zarr_format
+        Zarr format to write. Ignored if zarr.__version__ < 3.
     """
 
     def _spacing_from_coords(da):
@@ -68,7 +71,8 @@ def dataarray_datatree_to_ome_zarr(
         return dy, dx
 
     try:
-        z_root = zarr.open_group(output_path, mode="w", zarr_format=2)
+        # only supported for zarr version > 2
+        z_root = zarr.open_group(output_path, mode="w", zarr_format=zarr_format)
     except TypeError:
         z_root = zarr.open_group(output_path, mode="w")
 
@@ -181,7 +185,7 @@ def dataarray_datatree_to_ome_zarr(
     }
 
 
-def numpy_dask_to_ome_zarr(
+def array_to_ome_zarr(
     img_arr: np.ndarray | da.Array,
     output_path: str | Path,
     channel_names: Sequence[str],

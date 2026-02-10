@@ -1,8 +1,8 @@
 """Shared data utilities."""
 
-from ._ome import dataarray_datatree_to_ome_zarr, numpy_dask_to_ome_zarr
+from ._ome import xarray_to_ome_zarr, array_to_ome_zarr
 
 __all__ = [
-    "dataarray_datatree_to_ome_zarr",
-    "numpy_dask_to_ome_zarr",
+    "xarray_to_ome_zarr",
+    "array_to_ome_zarr",
 ]
